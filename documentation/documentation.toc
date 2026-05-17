@@ -1,0 +1,14 @@
+\contentsline {section}{\numberline {1}Uvod}{2}{}%
+\contentsline {section}{\numberline {2}Opis rešenja}{3}{}%
+\contentsline {subsection}{\numberline {2.1}Skup podataka}{3}{}%
+\contentsline {subsection}{\numberline {2.2}Pretprocesiranje audio signala}{4}{}%
+\contentsline {subsection}{\numberline {2.3}MFCC reprezentacija}{5}{}%
+\contentsline {subsection}{\numberline {2.4}LFCC reprezentacija}{5}{}%
+\contentsline {subsection}{\numberline {2.5}CNN arhitektura}{8}{}%
+\contentsline {subsection}{\numberline {2.6}Treniranje modela}{9}{}%
+\contentsline {section}{\numberline {3}Eksperimentalni rezultati}{10}{}%
+\contentsline {subsection}{\numberline {3.1}Rezultati MFCC modela}{10}{}%
+\contentsline {subsection}{\numberline {3.2}Rezultati LFCC modela}{10}{}%
+\contentsline {subsection}{\numberline {3.3}Poređenje MFCC i LFCC pristupa}{12}{}%
+\contentsline {subsection}{\numberline {3.4}Diskusija rezultata}{12}{}%
+\contentsline {section}{\numberline {4}Zaključak}{12}{}%
