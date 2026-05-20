@@ -218,18 +218,18 @@ Pre početka treniranja podaci su konvertovani u PyTorch tenzore i prilagođeni 
 
 Za treniranje modela korišćena je Binary Cross-Entropy (BCE) funkcija gubitka, pogodna za probleme binarne klasifikacije. Kao optimizer korišćen je Adam optimizer sa stopom učenja od 0.001. Treniranje modela vršeno je u mini-batchevima veličine 32 uzorka tokom 10 epoha.
 
-Tokom procesa treniranja za svaki batch vršeno je prosleđivanje podataka kroz mrežu (\textit{forward propagation}), računanje funkcije gubitka, a zatim ažuriranje parametara mreže korišćenjem postupka propagacije greške unazad (\textit{backpropagation}). Cilj treniranja bio je minimizacija funkcije gubitka i poboljšanje sposobnosti modela da razlikuje prisustvo i odsustvo ključne reči ``stop''.
+Tokom procesa treniranja za svaki batch vršeno je prosleđivanje podataka kroz mrežu (\textit{forward propagation}), računanje funkcije gubitka, a zatim ažuriranje parametara mreže korišćenjem postupka propagacije greške unazad (\textit{backpropagation}). Nakon svake epohe računata je prosečna vrednost funkcije gubitka kako bi se pratio napredak modela tokom treniranja.
 
 Implementacija modela realizovana je korišćenjem Python programskog jezika i PyTorch biblioteke za razvoj neuronskih mreža.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.75\textwidth]{images/lfcc_loss.png}
-    \caption{Promena vrednosti funkcije gubitka tokom treniranja LFCC modela}
-    \label{fig:lfcc_loss}
+	\centering
+	\includegraphics[width=0.75\textwidth]{images/lfcc_loss.png}
+	\caption{Promena vrednosti funkcije gubitka tokom treniranja LFCC modela}
+	\label{fig:lfcc_loss}
 \end{figure}
 
-Sa slike \ref{fig:lfcc_loss} može se primetiti da vrednost funkcije gubitka postepeno opada tokom epoha, što ukazuje na uspešno treniranje modela i prilagođavanje parametara mreže zadatom problemu klasifikacije.
+Sa slike \ref{fig:lfcc_loss} može se primetiti da vrednost funkcije gubitka postepeno opada tokom epoha, od približno 0.10 do 0.04, što ukazuje na uspešno treniranje modela i stabilno prilagođavanje parametara mreže zadatom problemu klasifikacije.
 
 \section{Eksperimentalni rezultati} 
 
@@ -237,32 +237,51 @@ Sa slike \ref{fig:lfcc_loss} može se primetiti da vrednost funkcije gubitka pos
 
 \subsection{Rezultati LFCC modela}
 
-Nakon treniranja CNN modela nad LFCC reprezentacijama izvršena je evaluacija uspešnosti modela na test skupu podataka. Evaluacija je sprovedena korišćenjem metrika accuracy, precision, recall i F1-score, kao i analizom konfuzione matrice.
+Nakon treniranja CNN modela nad LFCC reprezentacijama izvršena je evaluacija uspešnosti modela na test skupu podataka. Evaluacija je sprovedena korišćenjem metrika accuracy, precision, recall i F1-score, kao i analizom konfuzione matrice, ROC krive i Precision-Recall krive.
 
-LFCC model ostvario je tačnost klasifikacije od 98.50\% na test skupu, što ukazuje na veoma uspešno razlikovanje prisustva i odsustva ključne reči ``stop''.
+Za klasifikaciju audio uzoraka korišćen je podrazumevani prag odlučivanja od 0.5, pri čemu su izlazi modela veći ili jednaki zadatom pragu klasifikovani kao pozitivna klasa, odnosno prisustvo ključne reči ``stop''.
+
+LFCC model ostvario je tačnost klasifikacije od približno 98\% na test skupu, što ukazuje na veoma uspešno razlikovanje prisustva i odsustva ključne reči ``stop''.
 
 Dobijena konfuziona matrica prikazana je na slici \ref{fig:lfcc_cm}. Iz matrice se može primetiti da model veoma uspešno prepoznaje negativnu klasu, dok se određeni broj grešaka javlja kod detekcije pozitivne klase.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{images/lfcc_confusion_matrix.png}
-    \caption{Konfuziona matrica LFCC modela}
-    \label{fig:lfcc_cm}
+	\centering
+	\includegraphics[width=0.6\textwidth]{images/lfcc_confusion_matrix.png}
+	\caption{Konfuziona matrica LFCC modela}
+	\label{fig:lfcc_cm}
 \end{figure}
 
-Na slici \ref{fig:lfcc_report} prikazan je detaljan izveštaj klasifikacije modela. Model ostvaruje precision vrednost od 0.93 za pozitivnu klasu, što znači da je broj lažno pozitivnih detekcija relativno mali. Drugim rečima, kada model predvidi prisustvo ključne reči ``stop'', ta predikcija je u velikom broju slučajeva tačna.
+Na slici \ref{fig:lfcc_report} prikazan je detaljan izveštaj klasifikacije modela. Precision za pozitivnu klasu iznosi približno 0.86, što ukazuje da većina audio uzoraka koje model klasifikuje kao ključnu reč zaista pripada pozitivnoj klasi. Recall vrednost iznosi oko 0.65, što pokazuje da model uspešno prepoznaje značajan broj pozitivnih primera, ali i dalje propušta određeni deo stvarno izgovorenih ključnih reči. F1-score pozitivne klase iznosi približno 0.74 i predstavlja kompromis između precision i recall metrike.
 
-Sa druge strane, recall vrednost iznosi 0.66, što ukazuje da model ne prepoznaje sve stvarne primere ključne reči i da određeni broj pozitivnih uzoraka ostaje neotkriven. Ovakav rezultat može biti posledica varijacija u izgovoru, prisustva šuma u audio signalima, različite jačine govora ili neuravnoteženosti skupa podataka, s obzirom da negativna klasa sadrži značajno više uzoraka od pozitivne klase.
+Razlika između precision i recall vrednosti može biti posledica neuravnoteženosti skupa podataka, s obzirom da negativna klasa sadrži značajno više uzoraka od pozitivne klase. Pored toga, različite varijacije u izgovoru, prisustvo šuma i razlike u jačini govora mogu otežati modelu prepoznavanje svih pozitivnih primera, zbog čega određeni broj audio uzoraka koji sadrže ključnu reč ostaje neprepoznat.
 
-F1-score za pozitivnu klasu iznosi 0.77 i predstavlja kompromis između precision i recall metrike. Dobijena vrednost ukazuje da model ostvaruje stabilne performanse, ali da postoji prostor za dodatno unapređenje detekcije aktivacione reči.
-
-Recall vrednost mogla bi biti poboljšana korišćenjem većeg broja pozitivnih uzoraka, primenom tehnika augmentacije audio signala, balansiranjem klasa ili treniranjem kompleksnijih modela sa većim brojem epoha i slojeva. Takođe, dodatno podešavanje hiperparametara moglo bi doprineti boljoj sposobnosti modela da prepozna različite varijacije ključne reči ``stop''.
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/lfcc_classification_report.png}
-    \caption{Classification report LFCC modela}
-    \label{fig:lfcc_report}
+	\centering
+	\includegraphics[width=0.7\textwidth]{images/lfcc_classification_report.png}
+	\caption{Classification report LFCC modela}
+	\label{fig:lfcc_report}
 \end{figure}
+
+Na slici \ref{fig:lfcc_roc} prikazana je ROC (\textit{Receiver Operating Characteristic}) kriva LFCC modela. Dobijena AUC vrednost iznosi približno 0.95, što ukazuje na veoma dobru sposobnost modela da razlikuje pozitivne i negativne primere nezavisno od izbora praga odlučivanja.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{images/lfcc_roc_curve.png}
+	\caption{ROC kriva LFCC modela}
+	\label{fig:lfcc_roc}
+\end{figure}
+
+Na slici \ref{fig:lfcc_pr} prikazana je Precision-Recall kriva LFCC modela. Može se primetiti da precision opada sa povećanjem recall vrednosti, što je očekivano kod neuravnoteženih skupova podataka gde pozitivna klasa ima znatno manji broj uzoraka u odnosu na negativnu klasu.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{images/lfcc_pr_curve.png}
+	\caption{Precision-Recall kriva LFCC modela}
+	\label{fig:lfcc_pr}
+\end{figure}
+
+Rezultati pokazuju da LFCC model ostvaruje veoma dobre performanse u zadatku detekcije ključne reči. Visoka precision vrednost omogućava pouzdanu detekciju aktivacione reči uz mali broj pogrešnih aktivacija, dok recall vrednost ukazuje da i dalje postoji prostor za dodatno unapređenje modela korišćenjem većeg broja pozitivnih uzoraka, dodatnog podešavanja hiperparametara ili složenije arhitekture neuronske mreže.
 
 
 \subsection{Poređenje MFCC i LFCC pristupa} 

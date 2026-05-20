@@ -2,4 +2,10 @@ venv
 dataset_wake_word_detection
 .ipynb_checkpoints
 dataset
-
+.venv/
+__pycache__/
+*.pt
+*.pth
+*.wav
+runs/
+checkpoints/
