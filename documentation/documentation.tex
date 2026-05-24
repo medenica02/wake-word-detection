@@ -96,7 +96,7 @@ U poslednjih nekoliko godina konvolucione neuronske mreže (\textit{Convolutiona
 
 U ovom radu razmatra se problem detekcije ključne reči ``stop'' korišćenjem konvolucionih neuronskih mreža. Kao skup podataka korišćen je Google Speech Commands dataset, koji sadrži veliki broj kratkih audio snimaka različitih izgovorenih reči. Poseban fokus rada stavljen je na poređenje dve metode za izdvajanje osobina audio signala -- MFCC i LFCC reprezentacija. Cilj rada nije razvoj nove arhitekture neuronske mreže, već analiza uticaja različitih audio reprezentacija na performanse sistema za wake word detekciju.
 
-U eksperimentalnom delu rada implementiran je jedinstven CNN model koji je treniran odvojeno nad MFCC i LFCC reprezentacijama audio signala. Dobijeni rezultati analizirani su korišćenjem standardnih metrika za klasifikaciju kao što su accuracy, precision, recall i F1-score, sa ciljem određivanja pogodnije reprezentacije za zadatak detekcije ključne reči.
+U eksperimentalnom delu rada implementirano je dva CNN modela koji su trenirani odvojeno nad MFCC i LFCC reprezentacijama audio signala. Dobijeni rezultati analizirani su korišćenjem standardnih metrika za klasifikaciju kao što su accuracy, precision, recall i F1-score, sa ciljem određivanja pogodnije reprezentacije za zadatak detekcije ključne reči.
 
 
 \section{Opis rešenja}
@@ -147,6 +147,48 @@ Kompletan postupak pretprocesiranja audio signala prikazan je na slici \ref{fig:
 
 \subsection{MFCC reprezentacija}
 
+MFCC (Mel-Frequency Cepstral Coefficients) je jedna od najčešće korišćenih metoda za izdvajanje karakteristika iz audio signala i najčešće se koristi upravo u prepoznavanju govora te je idealan kandidat za obradu skupa podataka u našem projektu. Cilj MFCC reprezentacije je da iz sirovog audio signala izdvoji informacije koje najbolje opisuju ljudski govor na osnovu toga kako ljudsko uho precepcira zvuk. 
+
+Sam proces dobijanja MFCC koeficijenata se sastoji iz nekoliko koraka.
+\begin{itemize}
+    \item Windowing,
+    \item STFT,
+    \item Spectogram,
+    \item Mel-frequency filtering,
+    \item LOG,
+    \item DCT,
+    \item MFCC.
+\end{itemize}
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/mfcc_pipeline.jpg}
+    \caption{MFCC pipeline}
+    \label{fig:mfcc_pipeline}
+\end{figure}
+
+Prvi korak je windowing, tada se audio signal deli na male vremenske segmente, najčešće od 20 do 40 ms. To se radi zato što govor sam po sebi nije stabilan tokom celog audio snimka, ali jeste približno stabilan u veoma kratkim intervalima pa se svaki vremenski segment može pojedinačno analizirati.\\
+Sledeći korak je STFT (Short-Time Fourier Transform) odnosno za svaki frejm se radi Furijerova transformacija. Time se signal iz vremenskog domena pretvara u frekvencijski domen. Na ovaj način saznajemo koje frekvencije postoje u tom delu govora i kolika je njihova energija. Rezultat ovog koraka je spektar frekvencija za svaki mali segment zvuka.\\
+Kada smo izvršili Furijerovu transformaciju za svaki segment, možemo spojiti rezultate svih frejmova i tako dobijamo spektogram. Spektogram je 2D prikaz koji izgleda kao slika i pogodan je za korišćenje od strane CNN modela. X-osa prikazuje vreme, y-osa prikazuje frekvenciju, a boja odnosno intenzitet označava jačinu energije.
+
+Iako CNN modeli mogu da koriste spektrograme MFCC ide korak dalje i dodatno prilagođava podatke ljudskom sluhu. To radi tako što primenjuje Mel filtere, tj. dobijeni spektar prolazi kroz skup filtera raspoređenih po Mel skali. Mel skala pokušava da imitira ljudsko uho odnosno mnogo bolje razlikuje niske frekvencije od visokih. Zato filteri gušće pokrivaju niske frekvencije, a ređe visoke. Rezultat je da signal postaje prilagođen percepciji govora i ovim procesom se uklanja deo nepotrebnih informacija.\\
+Ljudsko uho ne doživljava glasnoću linearno pa se na energije Mel filtera primenjuje logaritamska funkcija kako bi se smanjile razlike u energiji, stabilizovali podaci i poboljšao rad modela.\\
+Na samom kraju radi se diskretna kosinusna transformacija (DTC). Njena uloga je da ukloni redudantne informacije, kompresuje podatke i izdvoji najvažnije karakteristike govora i tako se dobijaju konačni MFCC koeficijenti.\\
+Finalni rezultat je MFCC matrica koja se često tretira kao slika nad kojom se rad konvolucije. MFCC matrica se koristi kao ulaz za CNN.
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/spectrogram.png}
+    \caption{Spektrogram}
+    \label{fig:spectrogram}
+\end{figure} 
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/mfcc_matrica.png}
+    \caption{MFCC matrica za audio signal reči stop}
+    \label{fig:mfcc_matrix}
+\end{figure} 
+
 \subsection{LFCC reprezentacija}
 
 Linear Frequency Cepstral Coefficients (LFCC) predstavljaju jednu od metoda za izdvajanje karakterističnih osobina audio signala koja se često koristi u zadacima obrade govora i audio klasifikacije. LFCC reprezentacija omogućava transformaciju audio signala iz vremenskog domena u kompaktnu vremensko-frekvencijsku reprezentaciju pogodnu za obradu metodama mašinskog učenja.
@@ -193,6 +235,17 @@ LFCC matrica predstavlja kompaktan opis audio signala i omogućava konvolucionoj
 
 Za klasifikaciju audio signala i detekciju ključne reči korišćena je konvoluciona neuronska mreža (Convolutional Neural Network -- CNN). Konvolucione neuronske mreže pokazale su veoma dobre rezultate u zadacima klasifikacije slika, obrade zvuka i prepoznavanja govora zbog sposobnosti automatskog izdvajanja karakterističnih obrazaca iz ulaznih podataka.
 
+MFCC matrice korišćene su kao ulaz u CNN model pod nazivom WakeWordCnnMfcc. Sama struktura ovog modela sastoji se od dva konvuluciona sloja, batch normalizacije, ReLu aktivacije, pooling-a, global average pooling-a, potpuno povezanih slojeva, dropout-a i izlaznog sloja.
+Prvi konvolucioni sloj ima jedan ulazni kanal i mreža uči 16 različitih filtera dimenzija  \(3 \times 3\) i dodaje se padding kako bi dimenzije ostale iste.
+
+BatchNorm normalizuje izlaz konvolucije i tako pomaže stabilnijem učenju i bržem treningu. Drugi konvolucioni sloj ima 16 feature mapa kao ulaz i izlaz postaje 32 feature mape. Ovo je dublji sloj i on uči kompleksnije obrasce. Za razliku od prvog sloja koji možda prepoznaje ivice i jednostavne frekvencijske promene drugi sloj prepoznaje složenije govorne obrasce, delove fonema i karakteristične strukture aktivacione reči. 
+
+Pooling sloj služi da smanji dimenzije feature mapa, time se smanjuje broj podataka, ubrzava trening i zadržavaju se najvažnije informacije. CNN bira maksimalnu vrednost iz malog regiona, što ustvari znači da se zadržavaju najjače karakteristike. Zatim se koristi ReLU aktivacija, to je funkcija max(0,x), odnosno ako je broj negativan on postaje 0, a ako je pozitivan ostaje isti. ReLU uvodi nelinearnost i bez nje bi cela mreža bila samo linearna transformacija i ne bi mogla da uči složene obrasce.
+
+Global Average Pooling pretvara svaku feature mapu u jednu vrednost i on zapravo smanjuje broj parametara, smanjuje overfitting i omogućava mreži da uzme prosečnu aktivaciju cele feature mape. Često je dosta efikasniji nego veliki potpuno povezani slojevi. 
+
+Potpuno povezani sloj fc1 je klasičan neuronski sloj koji prima 32 ulaza i daje 64 neurona i tu mreža kombinuje sve naučene karakteristike. Dodat je i dropout čija je funkcija da tokom treninga nasumično ugasi određeni procenat neurona kako bi se sprečio  overfitting tj. kako model ne bi zapamtio trening podatke nego naučio generalne obrasce. Poslednji sloj je fc2 koji vraća jednu vrednost koja se naziva logit. Logit može biti bilo koji realan broj, a tek kasnije se koristi aktivaciona funkcija sigmoid kako bi ove vrednosti ubacila u vrednosti u intervalu od 0 do 1 koje bi predstavljale verovatnoću da je u pitanju aktivaciona reč.
+
 U ovom radu LFCC matrice korišćene su kao ulaz u CNN model. Pošto LFCC reprezentacija ima oblik dvodimenzione matrice, moguće ju je posmatrati na sličan način kao sliku, što omogućava efikasnu primenu konvolucionih slojeva za prepoznavanje lokalnih vremensko-frekvencijskih obrazaca u audio signalu.
 
 Korišćena CNN arhitektura sastoji se iz dva konvoluciona sloja, pooling slojeva i potpuno povezanih (\textit{fully connected}) slojeva. Prvi konvolucioni sloj koristi 16 filtera dimenzije \(3 \times 3\), dok drugi konvolucioni sloj koristi 32 filtera iste dimenzije. Nakon svakog konvolucionog sloja primenjuje se ReLU aktivaciona funkcija, koja uvodi nelinearnost u model i omogućava učenje složenijih obrazaca.
@@ -211,6 +264,29 @@ Arhitektura korišćene konvolucione neuronske mreže prikazana je na slici \ref
 \end{figure}
 
 \subsection{Treniranje modela}
+
+Koristeći novonastale MFCC matrice formirali smo dva skupa podataka, jedan za trening i jedan za testiranje tako što smo ceo skup podataka stratifikovano podelili na ova dva skupa. Za te namene smo koristili funkciju \texttt{train\_test\_split} iz biblioteke \texttt{Scikit-learn}. Odnos veličina ovih skupova bila je 75 prema 25 procenata za trening odnosno test skup podataka. 
+
+Pre samog procesa treniranja modela skupovi podataka su transformisani u PyTorch tensore kako bi bili prikladni za ulaz u konvolutivnu neuronsku mrežu. Takođe dodata je još jedna dimenzija za broj kanala zato što CNN očekuje takav oblik ulaza sa 4 dimenzije. Koristi se float32 tip podataka jer BCEWithLogitsLoss očekuje decimalne vrednosti. TensorDataset spaja ulaze i njihove labele u jedan skup podataka, a DataLoader deli podatke u manje grupe (batch). Tako se obezbeđuje da model ne trenira nad svim podacima odjednom nego uzima onoliko uzoraka koliki je batch, računa grešku, ažurira težine pa tek onda prelazi na sledeći batch. Time se štedi memorija, ubrzava trening i stabilizuje učenje. Shuffle je uključen kako bi sprečio da model nauči redosled podataka.
+
+Kako je naš skup podataka nebalansiran neopodno je da damo nekako prioritet i to rešavamo tako što dodajemo pozitivnoj klasi veću težinu i samim tim obezbeđujemo da su greške nad pozitivnim klasama važnije.
+
+Kako postoji samo dve klase onda koristimo Binary Cross Entropy za binarnu klasifikaciju. BCEWithLogitsLoss interno koristi sigmoid aktivacionu funkciju koja logite pretvara u podatke u opsegu od 0 do 1 koji predstavljaju verovatnoću da su aktivaciona reč. Ova loss funkcija je numerički stablinija i podržava dodavanje važnosti, odnosno težine određenoj klasi.
+
+Optimizator Adam ažurira težine mreže. Adam dobro radi za CNN modele i automatski prilagođava learning rate. Learning rate određuje veličinu koraka pri učenju i često je teško pronaći idealan korak jer ukoliko je prevelik trening može biti nestabilan, a ukoliko je premali onda trening može biti veoma spor.
+
+Treniranje modela se odvija u epohama gde jedna epoha znači da je model video ceo trening skup jednom, a 10 epoha znači da ceo skup podataka prolazi 10 puta kroz mrežu. Unutar treninga se čuva ukupna greška u toku epohe tako što se porede predikcije modela i stvarne labele i zatim se sabiraju. Radi se backpropagation i računaju se gradijenti, a pre toga je neophodno da se obrišu prethodni gradijenti zato što bi ih PyTorch inače sabirao. Model tako saznaje kako treba da promeni težine da bi smanjio grešku i na samom kraju se radi ažuriranje težina pomoću Adam optimizatora.
+
+Stabilnost treniranja modela možemo videti na osnovu količine greški koje se akumuliraju za svaku epohu. Ukoliko ukupna greška opada to znači da naš model uči kako treba, ipak ukoliko oscilira ukupna greška to znači da je model nestabilan i da treba da ga promenimo.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{images/training_loss.png}
+	\caption{Promena vrednosti funkcije gubitka tokom treniranja MFCC modela}
+	\label{fig:mfcc_loss}
+\end{figure}
+
+Sa slike možemo da primetimo da ukupna greška opada, ali i u par trenutaka malo poraste. To nije neuobičajeno kod MFCC reprezentacije podataka i konkretno naše implementacije CNN zbog BatchNorm i Dropout-a pa može da se desi da nekad kombinacija toga napravi kratku oscilaciju i to ne treba da nas zabrinjava jer se vidi da loss opada sve vreme i to znači da naš model uči normalno.
 
 Nakon formiranja LFCC reprezentacija i definisanja arhitekture konvolucione neuronske mreže izvršeno je treniranje modela za zadatak detekcije ključne reči. Skup podataka podeljen je na trening i test skup korišćenjem funkcije \texttt{train\_test\_split} iz biblioteke \texttt{Scikit-learn}. Za treniranje modela korišćeno je 75\% podataka, dok je preostalih 25\% korišćeno za evaluaciju uspešnosti modela. Podela podataka izvršena je korišćenjem stratifikovanog pristupa kako bi odnos pozitivne i negativne klase bio očuvan u oba skupa.
 
@@ -234,6 +310,51 @@ Sa slike \ref{fig:lfcc_loss} može se primetiti da vrednost funkcije gubitka pos
 \section{Eksperimentalni rezultati} 
 
 \subsection{Rezultati MFCC modela} 
+
+Nakon treniranja CNN modela nad MFCC reprezentacijama izvršena je evaluacija uspešnosti modela na test skupu podataka. Koršćene su ugrađene funkcije za evaluaciju poput classification report, matrice konfuzije, ROC-AUC krive, PR krive. Za klasifikaciju korišćen je prag odlučivanja od 0.7. 
+
+Na sledećoj slici možemo primetiti rezultat funkcije classification report. Primećujemo da je metrika accuracy jako dobra, odnosno iznosi 99\%, što bi inače bio jako dobar rezultat, ali u našoj situaciji to nije odgovarajuća metrika za analizu jer je skup podataka nebalansiran. Bolje metrike za procenu kvaliteta modela biće precision, recall i f1-score. Vidimo da su sve tri metrike dale jako dobre rezultate što znači da naš model veoma dobro procenjuje da li je u audio snimku izgovorena aktivaciona reč ili ne i ne dolazi do overfitting-a.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{images/classification_report.png}
+	\caption{Classification report za MFCC model}
+	\label{fig:cr_mfcc}
+\end{figure}
+
+Pored ovih metrika veoma značajna metrika je i matrica konfuzije od koje zapravo i nastaju prethodne metrike.
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{images/cm_mfcc.png}
+	\caption{Matrica konfuzije za MFCC model}
+	\label{fig:cm_mfcc}
+\end{figure}
+
+
+Na slici vidimo da model veoma dobro razdvaja pozitivnu i negativnu klasu, ali takođe ima i određen broj propusta najčešće kada je u pitanju pozitivna klasa, a model je predvideo negativnu klasu. Ova brojka nije zabrinjavajuća, ali ju je moguće popraviti pomoću modifikacije praga odlučivanja ili primenom oversampling-a na pozitivnu klasu tokom treninga kako bi se skup podataka izbalansirao.
+
+Još dve metrike korišćene za analizu kvaliteta modela su ROC-AUC kriva i PR kriva.
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{images/roc_curve_mfcc.png}
+	\caption{ROC-AUC kriva za MFCC model}
+	\label{fig:roc_auc_mfcc}
+\end{figure}
+
+Kod ROC-AUC krive vidimo da je AUC 0.995 što je izuzetno visok skor. Kriva odmah raste ka gornjem levom uglu što znači da model pri gotovo svakom pragu razlikuje klasu 0 od klase 1 sa minimalnim brojem lažnih alarma.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{images/pr_curve_mfcc.png}
+	\caption{PR kriva za MFCC model}
+	\label{fig:pr_mfcc}
+\end{figure}
+
+Kod PR(Precision-Recall) krive vidimo da je AP 0.955 što je odličan rezultat s obzirom da imamo nebalasiran skup podataka. Vidimo da je veći deo krive precision 1 sve dok se ne dođe do recall 0.8 zatim kreće da opada. To znači da model žrtvuje preciznost kako bi pokrio poslednje pozitivne uzorke. PR kriva je strožija u analizi kvaliteta modela i i dalje je dala veoma dobar rezultat što samo pokazuje da model radi odlično.
 
 \subsection{Rezultati LFCC modela}
 
@@ -289,6 +410,6 @@ Rezultati pokazuju da LFCC model ostvaruje veoma dobre performanse u zadatku det
 \subsection{Diskusija rezultata}
 
 \section{Zaključak} 
-
+\section{Literatura} 
 
 \end{document}
