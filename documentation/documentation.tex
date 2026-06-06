@@ -10,7 +10,8 @@
 \usepackage{lmodern}
 \usepackage{float}
 \usepackage{tocloft}
-
+\usepackage{hyperref}
+\hypersetup{colorlinks,linkcolor=blue,urlcolor=blue}
 \usepackage[T1]{fontenc}
 
 \setlength{\parskip}{1em}
@@ -72,7 +73,7 @@
 
     \vfill
 
-    \textbf{Datum:} 2025/26
+    \textbf{Datum:} jun 2026.
 
 \end{titlepage}
 \newpage
@@ -339,7 +340,7 @@ Još dve metrike korišćene za analizu kvaliteta modela su ROC-AUC kriva i PR k
 	\label{fig:roc_auc_mfcc}
 \end{figure}
 
-Kod ROC-AUC krive vidimo da je AUC 0.996 što je izuzetno visok skor. Kriva odmah raste ka gornjem levom uglu što znači da model pri gotovo svakom pragu razlikuje klasu 0 od klase 1 sa minimalnim brojem lažnih alarma.
+Kod ROC-AUC krive vidimo da je AUC 0.9954 što je izuzetno visok skor. Kriva odmah raste ka gornjem levom uglu što znači da model pri gotovo svakom pragu razlikuje klasu 0 od klase 1 sa minimalnim brojem lažnih alarma.
 
 \begin{figure}[H]
 	\centering
@@ -348,7 +349,7 @@ Kod ROC-AUC krive vidimo da je AUC 0.996 što je izuzetno visok skor. Kriva odma
 	\label{fig:pr_mfcc}
 \end{figure}
 
-Kod PR(Precision-Recall) krive vidimo da je AP 0.96 što je odličan rezultat s obzirom da imamo nebalasiran skup podataka. Vidimo da je veći deo krive precision 1 sve dok se ne dođe do recall 0.8 zatim kreće da opada. To znači da model žrtvuje preciznost kako bi pokrio poslednje pozitivne uzorke. PR kriva je strožija u analizi kvaliteta modela i i dalje je dala veoma dobar rezultat što samo pokazuje da model radi odlično.
+Kod PR(Precision-Recall) krive vidimo da je AP 0.9592 što je odličan rezultat s obzirom da imamo nebalasiran skup podataka. Vidimo da je veći deo krive precision 1 sve dok se ne dođe do recall 0.8 zatim kreće da opada. To znači da model žrtvuje preciznost kako bi pokrio poslednje pozitivne uzorke. PR kriva je strožija u analizi kvaliteta modela i i dalje je dala veoma dobar rezultat što samo pokazuje da model radi odlično.
 
 \subsection{Rezultati LFCC modela}
 
@@ -419,14 +420,14 @@ Na prethodnoj slici plavom bojom označena je ROC kriva MFCC modela, a narandža
 	\label{fig:pr_compare}
 \end{figure}
 
-Na slici je kao i u prethodnom slučaju plavom bojom označena PR kriva MFCC modela, a narandžastom bojom označena je PR kriva LFCC modela. Možemo primetiti da je AP skor zapravo dosta veći kod MFCC modela u odnosu na LFCC model. PR kriva kod LFCC modela brže opada ka donjem desnom uglu, gde se vidi da kod MFCC precision ostaje 1 sve do 0.8 recall, a kod LFCC kreće pad već od 0.6 recall odnosno LFCC mnogo ranije kreće da žrtvuje preciznost kako bi obuhvatila što više pozitivnih slučajeva.
+Na slici je kao i u prethodnom slučaju plavom bojom označena PR kriva MFCC modela, a narandžastom bojom označena je PR kriva LFCC modela. Možemo primetiti da je AP skor zapravo dosta veći kod MFCC modela u odnosu na LFCC model. PR kriva kod LFCC modela brže opada ka donjem desnom uglu, gde se vidi da kod MFCC precision ostaje 1 sve do 0.85 recall, a kod LFCC kreće pad već od 0.5 recall odnosno LFCC mnogo ranije kreće da žrtvuje preciznost kako bi obuhvatila što više pozitivnih slučajeva.
 
 \newpage
 \section{Zaključak} 
 
 U ovom radu razmatran je problem detekcije aktivacione reči "stop" iz Google Speech Commands skupa podataka korišćenjem konvolucione neuronske mreže, sa fokusom na poređenje dve metode za izdvajanje karakteristika audio signala - MFCC i LFCC reprezentacije audio signala.
 
-Rezultati su pokazali uspešnost i veoma dobre performanse oba pristupa u zadatku binarne klasifikacije, ali je jasno bila izražena razlika u korist MFCC reprezentacije podataka. Razlika u AP vrednosti od gotovo 14\% posebno je značajna, s obzirom na to da PR kriva predstavlja strožiji kriterijum evaluacije u uslovima nebalansiranog skupa podataka.
+Rezultati su pokazali uspešnost i veoma dobre performanse oba pristupa u zadatku binarne klasifikacije, ali je jasno bila izražena razlika u korist MFCC reprezentacije podataka. Razlika u AP vrednosti od gotovo 13\% posebno je značajna, s obzirom na to da PR kriva predstavlja strožiji kriterijum evaluacije u uslovima nebalansiranog skupa podataka.
 
 
 Ključna prednost MFCC reprezentacije leži u korišćenju Mel skale frekvencija, koja modeluje način na koji ljudsko uho percipira zvuk. Zahvaljujući tome MFCC prirodno naglašava frekvencijske opsege najrelevantnije za govor, kao što su niže frekvencije. LFCC, s druge strane, koristi linearnu frekvencijsku skalu u odnosu na Mel skalu i ravnomerno tretira niske i visoke frekvencije čime može izgubiti neke informacije koje su korisne za razlikovanje klasa, što može biti korisno u određenim kontekstima, ali se pokazalo manje efikasnim za zadatak detekcije aktivacione reči iz audio signala.
@@ -459,6 +460,14 @@ Ovo istraživanje potvrđuje da izbor metode za izdvajanje karakteristika audio 
 	\item G. Chen, C. Parada i G. Heigold,
 	\textit{Small-Footprint Keyword Spotting Using Deep Neural Networks},
 	ICASSP, 2014.
+
+        \item Davis S., Mermelstein P.,
+	\textit{Comparison of Parametric Representations for Monosyllabic Word Recognition in Continuously Spoken Sentences.
+IEEE Transactions on Acoustics, Speech, and Signal Processing},
+	1980.
+
+    \item Jurafsky D., Martin J. H.,
+	\textit{Speech and Language Processing (3rd Edition Draft)}.
 	
 \end{enumerate}
 

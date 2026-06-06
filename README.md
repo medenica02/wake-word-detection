@@ -21,6 +21,7 @@ Cilj projekta bio je poređenje uspešnosti MFCC i LFCC reprezentacija u zadatku
 - Python
 - PyTorch
 - Torchaudio
+- Librosa
 - NumPy
 - Scikit-Learn
 - Matplotlib
@@ -30,13 +31,16 @@ Cilj projekta bio je poređenje uspešnosti MFCC i LFCC reprezentacija u zadatku
 
 Model se sastoji od:
 
-- dva konvoluciona sloja
+- tri konvoluciona sloja
+- Batch Normalization slojeva
 - ReLU aktivacionih funkcija
 - MaxPooling slojeva
+- Adaptive Average Pooling sloja
+- Dropout sloja
 - dva potpuno povezana (Fully Connected) sloja
-- Sigmoid izlaza za binarnu klasifikaciju
+- izlaznog linearnog sloja sa jednim logitom za binarnu klasifikaciju
 
-Za optimizaciju je korišćen Adam optimizer, dok je funkcija gubitka Binary Cross Entropy (BCE Loss).
+Za optimizaciju je korišćen Adam optimizer, dok je funkcija gubitka Binary Cross Entropy (BCEWithLogitsLoss).
 
 ## Evaluacija
 
@@ -55,21 +59,21 @@ Performanse modela procenjivane su korišćenjem sledećih metrika:
 
 | Metrika | Vrednost |
 |----------|----------|
-| Accuracy | 98.89% |
-| Precision | 0.93 |
-| Recall | 0.93 |
-| F1-score | 0.93 |
-| ROC AUC | 0.9934 |
-| AP | 0.9483 |
+| Accuracy | 99.45% |
+| Precision | 0.98 |
+| Recall | 0.94 |
+| F1-score | 0.96 |
+| ROC AUC | 0.9954 |
+| AP | 0.9592 |
 
 ### LFCC model
 
 | Metrika | Vrednost |
 |----------|----------|
 | Accuracy | 98.41% |
-| Precision | 0.88 |
-| Recall | 0.66 |
-| F1-score | 0.75 |
+| Precision | 0.93 |
+| Recall | 0.83 |
+| F1-score | 0.87 |
 | ROC AUC | 0.9776 |
 | AP | 0.8284 |
 
